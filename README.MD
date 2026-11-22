@@ -140,3 +140,50 @@ int main(void)
     return EXIT_SUCCESS;
 }
 ```
+
+
+## CMake and Conan 1
+
+This source tree includes a CMake build and a Conan 1 recipe (`conanfile.py`).
+The default build uses OCI runtime loading, so Oracle OCI headers and libraries
+are not required at build time; an Oracle Instant Client is required at runtime.
+
+### CMake
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DOCILIB_ORACLE_IMPORT=runtime -DOCILIB_CHARSET=ansi
+cmake --build build --parallel
+cmake --install build --prefix /usr/local
+```
+
+Build a static library with `-DBUILD_SHARED_LIBS=OFF`.
+
+For OCI linkage mode, set `ORACLE_HOME` or pass `OCI_INCLUDE_DIR` and
+`OCI_LIBRARY_DIR`, then configure with `-DOCILIB_ORACLE_IMPORT=linkage`.
+
+Consumers can use the installed CMake package:
+
+```cmake
+find_package(ocilib CONFIG REQUIRED)
+target_link_libraries(myapp PRIVATE ocilib::ocilib)
+```
+
+### Conan 1
+
+```bash
+conan create . mylis/stable
+```
+
+Options:
+
+```bash
+conan create . mylis/stable -o ocilib:shared=True \
+  -o ocilib:oracle_import=runtime -o ocilib:charset=ansi
+```
+
+For a static package use `-o ocilib:shared=False`.
+For linkage mode, define `ORACLE_HOME` or `OCI_INCLUDE_DIR` and
+`OCI_LIBRARY_DIR` in the build environment.
+
+This recipe targets Conan 1.x and uses the Conan 1 `CMake` helper.
